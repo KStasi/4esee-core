@@ -76,8 +76,8 @@ describe('BettingEvent.js', () => {
     beforeEach(async () => {
       await isReady;
       deployerPrivateKey = createLocalBlockchain();
-      const startLag = 1000;
-      const duration = 1000;
+      const startLag = 3;
+      const duration = 3;
       const startTimestamp = Date.now() + startLag;
       const endTimestamp = startTimestamp + duration;
       const eventDescription = 'Beastcost will win the ESL Championship';
@@ -143,8 +143,40 @@ describe('BettingEvent.js', () => {
       console.log('Sending the transaction..');
       let pendingTx = await transaction.send();
       console.log(pendingTx.hash());
+    });
 
-      // Verify storage
+    it('call resolve after the game was finished', async () => {
+      // TODO: Wait until the game ended
+
+      let oraclePk = merkleMapValues.ORACLE_KEY;
+      let end = merkleMapValues.END_KEY;
+
+      // Get map
+      const map = prepareMap(merkleMapValues);
+      console.log(bettingEventInstance.network.timestamp.get().toString());
+      console.log(merkleMapValues.END_KEY);
+      // Get witnesses
+      const oraclePublicKey = PublicKey.fromBase58(oraclePk);
+      const endUInt64 = UInt64.from(end);
+
+      let oracleWitness = map.getWitness(bettingEventInstance.ORACLE_KEY);
+      let endWitness = map.getWitness(bettingEventInstance.END_KEY);
+
+      let transaction = await Mina.transaction(
+        { sender: deployerPrivateKey.toPublicKey(), fee: 0.1e9 },
+        () => {
+          bettingEventInstance.reveal(
+            endWitness,
+            endUInt64,
+            oracleWitness,
+            oraclePublicKey
+          );
+        }
+      );
+      // DEV: can't prove in local blockchain since the timestamp is not updated
+      await transaction.sign([deployerPrivateKey]).prove();
+
+      let pendingTx = await transaction.send();
     });
   });
 });

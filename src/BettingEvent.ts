@@ -119,6 +119,10 @@ export class BettingEvent extends SmartContract {
     oracleWitness: MerkleMapWitness,
     oraclePk: PublicKey
   ): void {
+    this.network.globalSlotSinceGenesis.assertEquals(
+      this.network.globalSlotSinceGenesis.get()
+    );
+
     // Get the result
     const result = this.result.get();
     this.result.assertEquals(result);
