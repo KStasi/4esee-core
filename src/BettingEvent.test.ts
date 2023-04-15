@@ -12,6 +12,7 @@ import {
 } from 'snarkyjs';
 
 import { deployAllContracts, createLocalBlockchain } from './utils';
+import { BettingEvent } from './BettingEvent.js';
 
 describe('BettingEvent.js', () => {
   let deployerPrivateKey: PrivateKey;
@@ -57,7 +58,13 @@ describe('BettingEvent.js', () => {
         DESCRIPTION_KEY: eventDescription,
       };
 
-      // TODO: verify initial storage
+      const bettingEventInstance = new BettingEvent(eventAddress);
+
+      // Verify initial storage
+      expect(bettingEventInstance.betsAgainst.get().toString()).toEqual('0');
+      expect(bettingEventInstance.betsFor.get().toString()).toEqual('0');
+      expect(bettingEventInstance.result.get().toString()).toEqual('0');
+      expect(bettingEventInstance.mapRoot.get().toString()).not.toEqual('0');
     });
   });
 });

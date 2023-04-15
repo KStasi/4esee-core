@@ -28,10 +28,10 @@ export class BettingEvent extends SmartContract {
 
   @state(Field) mapRoot = State<Field>();
 
-  @state(UInt32) betsAgainst = State<UInt64>();
-  @state(UInt32) betsFor = State<UInt64>();
+  @state(UInt64) betsAgainst = State<UInt64>();
+  @state(UInt64) betsFor = State<UInt64>();
 
-  @state(UInt32) result = State<Field>();
+  @state(UInt64) result = State<Field>();
 
   init() {
     super.init();
