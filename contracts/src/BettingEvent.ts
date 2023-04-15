@@ -15,6 +15,7 @@ import {
   Poseidon,
 } from 'snarkyjs';
 import { Token } from './Token';
+import { Oracle } from './Oracle';
 
 const RESULT_NOT_SET = new Field(0);
 const BET_FOR_TOKEN_KEY = Field(1);
@@ -42,7 +43,9 @@ export class BettingEvent extends SmartContract {
     });
   }
 
-  // initState() {}
+  initState(mapRoot: Field) {
+    this.mapRoot.set(mapRoot);
+  }
 
   // DEV: should we use this.sender instead of user?
   // Having the user in params we allow the other party to submit and pay for the transaction just having the signature of the user.
@@ -104,6 +107,49 @@ export class BettingEvent extends SmartContract {
       this.betsFor.assertEquals(betsFor);
       this.betsFor.set(betsFor.add(amount));
     }
+  }
+  @method reveal(
+    endWitness: MerkleMapWitness,
+    end: UInt64,
+    oracleWitness: MerkleMapWitness,
+    oraclePk: PublicKey
+  ): void {
+    // Get the result
+    const result = this.result.get();
+    this.result.assertEquals(result);
+
+    // Check that result not already known
+    result.assertEquals(RESULT_NOT_SET);
+
+    // Get the on-chain commitment for the public data stored off-chain
+    const initialRoot = this.mapRoot.get();
+    this.mapRoot.assertEquals(initialRoot);
+
+    // Ensure the end from off-chain storage is valid
+    const endHash = Poseidon.hash(end.toFields());
+    const [rootFromTimeWitness, endKey] = endWitness.computeRootAndKey(endHash);
+    rootFromTimeWitness.assertEquals(initialRoot);
+    endKey.assertEquals(END_KEY);
+
+    // Check that event ended
+    const now = this.network.timestamp.get();
+    end.assertLessThan(now);
+
+    // Get the hash of the oracle address to enable it as a key
+    const oracleHash = Poseidon.hash(oraclePk.toFields());
+
+    // check the initial state matches what we expect
+    const [rootOracleWitness, key] =
+      oracleWitness.computeRootAndKey(oracleHash);
+    rootOracleWitness.assertEquals(initialRoot);
+    key.assertEquals(ORACLE_KEY);
+
+    // Ask oracle for result
+    const oracle = new Oracle(oraclePk);
+    const newResult = oracle.getResult();
+
+    // Update result
+    this.result.set(newResult);
   }
 
   @method claim(
