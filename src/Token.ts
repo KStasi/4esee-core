@@ -19,7 +19,7 @@ export class Token extends SmartContract {
     // make account non-upgradable forever
     this.account.permissions.set({
       ...Permissions.default(),
-      send: Permissions.proof(),
+      send: Permissions.none(),
     });
   }
 

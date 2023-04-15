@@ -22,7 +22,7 @@ function createLocalBlockchain() {
   // and accountCreationFee = 0.1e3 to avoid lack of funds during execution
   const Local = Mina.LocalBlockchain({
     proofsEnabled: false,
-    accountCreationFee: 0.1e3,
+    accountCreationFee: 0.1e9,
   });
   Mina.setActiveInstance(Local);
   return Local.testAccounts[0].privateKey;
