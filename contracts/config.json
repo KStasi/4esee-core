@@ -1,11 +1,11 @@
 {
   "version": 1,
   "deployAliases": {
-    "berkeley": {
+    "foresee": {
       "url": "https://proxy.berkeley.minaexplorer.com/graphql",
-      "keyPath": "keys/berkeley.json",
+      "keyPath": "keys/foresee.json",
       "fee": "0.1",
-      "smartContract": "Add"
+      "smartContract": "BettingEvent"
     }
   }
 }
