@@ -30,55 +30,55 @@ function createLocalBlockchain() {
 async function deployToken(
   zkAppInstance: Token,
   zkAppPrivatekey: PrivateKey,
-  deployerPrivatekey: PrivateKey
+  deployerAddress: PublicKey
 ) {
-  await deployContract(zkAppInstance, zkAppPrivatekey, deployerPrivatekey);
+  return await prepareContractParams(
+    zkAppInstance,
+    zkAppPrivatekey,
+    deployerAddress
+  );
 }
 
 async function deployOracle(
   zkAppInstance: Oracle,
   zkAppPrivatekey: PrivateKey,
-  deployerPrivatekey: PrivateKey
+  deployerAddress: PublicKey
 ) {
-  await deployContract(zkAppInstance, zkAppPrivatekey, deployerPrivatekey);
+  return await prepareContractParams(
+    zkAppInstance,
+    zkAppPrivatekey,
+    deployerAddress
+  );
 }
 
 async function deployEvent(
   zkAppInstance: BettingEvent,
   zkAppPrivatekey: PrivateKey,
-  deployerPrivatekey: PrivateKey,
+  deployerAddress: PublicKey,
   mapRoot: Field
 ) {
-  await deployContract(
+  return await prepareContractParams(
     zkAppInstance,
     zkAppPrivatekey,
-    deployerPrivatekey,
+    deployerAddress,
     () => {
       zkAppInstance.initState(mapRoot);
     }
   );
 }
 
-async function deployContract(
+async function prepareContractParams(
   zkAppInstance: BettingEvent | Token | Oracle,
   zkAppPrivatekey: PrivateKey,
-  deployerPrivatekey: PrivateKey,
+  deployerAccount: PublicKey,
   extraActions: any = null
-) {
-  const deployerAccount = deployerPrivatekey.toPublicKey();
-  const tx = await Mina.transaction(
-    { sender: deployerAccount, fee: 0.1e9 },
-    () => {
-      AccountUpdate.fundNewAccount(deployerAccount);
-      zkAppInstance.deploy({ zkappKey: zkAppPrivatekey });
-      zkAppInstance.init();
-      if (extraActions) extraActions();
-    }
-  );
-  await tx.prove();
-  let sentTx = await tx.sign([zkAppPrivatekey, deployerPrivatekey]).send();
-  await sentTx.wait();
-  return sentTx;
+): Promise<() => void> {
+  return () => {
+    AccountUpdate.fundNewAccount(deployerAccount);
+    zkAppInstance.deploy({ zkappKey: zkAppPrivatekey });
+    zkAppInstance.init();
+    if (extraActions) extraActions();
+  };
 }
 
 async function prepareAddresses(): Promise<{
@@ -132,18 +132,32 @@ async function deployAllContracts(deployerPrivateKey: PrivateKey): Promise<{
     oraclePrivateKey,
     eventPrivateKey,
   } = await prepareAddresses();
+  console.log(tokenAgainstAddress.toBase58());
+  console.log(tokenForAddress.toBase58());
+  console.log(oracleAddress.toBase58());
+  console.log(eventAddress.toBase58());
 
   const tokenForInstance = new Token(tokenForAddress);
   const tokenAgainstInstance = new Token(tokenAgainstAddress);
   const oracleInstance = new Oracle(oracleAddress);
 
-  await deployToken(tokenForInstance, tokenForPrivateKey, deployerPrivateKey);
-  await deployToken(
+  const deployerAccount = deployerPrivateKey.toPublicKey();
+
+  const tokenForParams = await deployToken(
+    tokenForInstance,
+    tokenForPrivateKey,
+    deployerAccount
+  );
+  const tokenAgainstParams = await deployToken(
     tokenAgainstInstance,
     tokenAgainstPrivateKey,
-    deployerPrivateKey
+    deployerAccount
   );
-  await deployOracle(oracleInstance, oraclePrivateKey, deployerPrivateKey);
+  const oracleParams = await deployOracle(
+    oracleInstance,
+    oraclePrivateKey,
+    deployerAccount
+  );
 
   const eventInstance = new BettingEvent(eventAddress);
   // TODO: use real mapRoot
@@ -166,12 +180,33 @@ async function deployAllContracts(deployerPrivateKey: PrivateKey): Promise<{
   map.set(Field(idsForMap.START_KEY), startDate);
   map.set(Field(idsForMap.END_KEY), endDate);
 
-  await deployEvent(
+  const eventParams = await deployEvent(
     eventInstance,
     eventPrivateKey,
-    deployerPrivateKey,
+    deployerAccount,
     map.getRoot()
   );
+
+  const tx = await Mina.transaction(
+    { sender: deployerAccount, fee: 0.1e9 },
+    () => {
+      tokenForParams();
+      tokenAgainstParams();
+      oracleParams();
+      eventParams();
+    }
+  );
+
+  await tx.prove();
+  let sentTx = await tx
+    .sign([
+      tokenAgainstPrivateKey,
+      tokenForPrivateKey,
+      oraclePrivateKey,
+      deployerPrivateKey,
+    ])
+    .send();
+  await sentTx.wait();
 
   return {
     tokenAgainstAddress,

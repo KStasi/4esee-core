@@ -36,7 +36,7 @@ async function main() {
   let deployerPrivateKey = PrivateKey.fromBase58(key.privateKey);
 
   const { eventAddress } = await deployAllContracts(deployerPrivateKey);
-  console.log(eventAddress.toString());
+  console.log(eventAddress.toBase58());
 }
 
 main().then(() => shutdown());
