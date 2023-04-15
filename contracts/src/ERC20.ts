@@ -62,9 +62,6 @@ type Erc20 = {
  * Just enough to be swapped by the DEX contract, and be secure
  */
 export class ERC20 extends SmartContract implements Erc20 {
-  // constant supply
-  SUPPLY = UInt64.from(10n ** 18n);
-
   deploy(args: DeployArgs) {
     super.deploy(args);
     this.account.tokenSymbol.set('SOM');
@@ -75,20 +72,6 @@ export class ERC20 extends SmartContract implements Erc20 {
   }
   @method init() {
     super.init();
-
-    // mint the entire supply to the token account with the same address as this contract
-    let address = this.self.body.publicKey;
-    let receiver = this.token.mint({
-      address,
-      amount: this.SUPPLY,
-    });
-    // assert that the receiving account is new, so this can be only done once
-    receiver.account.isNew.assertEquals(Bool(true));
-    // pay fees for opened account
-    this.balance.subInPlace(Mina.accountCreationFee());
-
-    // since this is the only method of this zkApp that resets the entire state, provedState: true implies
-    // that this function was run. Since it can be run only once, this implies it was run exactly once
 
     // make account non-upgradable forever
     this.account.permissions.set({
@@ -110,7 +93,7 @@ export class ERC20 extends SmartContract implements Erc20 {
     return Field(9);
   }
   totalSupply(): UInt64 {
-    return this.SUPPLY;
+    return new UInt64(0);
   }
   balanceOf(owner: PublicKey): UInt64 {
     let account = Account(owner, this.token.id);
@@ -121,6 +104,26 @@ export class ERC20 extends SmartContract implements Erc20 {
   allowance(owner: PublicKey, spender: PublicKey): UInt64 {
     // TODO: implement allowances
     return UInt64.zero;
+  }
+
+  @method mint(to: PublicKey, value: UInt64): Bool {
+    this.token.mint({
+      address: to,
+      amount: value,
+    });
+    this.emitEvent('Transfer', { from: this.address, to, value });
+    // we don't have to check the balance of the sender -- this is done by the zkApp protocol
+    return Bool(true);
+  }
+
+  @method burn(from: PublicKey, value: UInt64): Bool {
+    this.token.burn({
+      address: from,
+      amount: value,
+    });
+    this.emitEvent('Transfer', { from: this.sender, to: this.address, value });
+    // we don't have to check the balance of the sender -- this is done by the zkApp protocol
+    return Bool(true);
   }
 
   @method transfer(to: PublicKey, value: UInt64): Bool {
