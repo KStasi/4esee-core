@@ -28,7 +28,7 @@ describe('BettingEvent.js', () => {
   });
 
   describe('Test deployments', () => {
-    it.skip('generates and deploys the `BettingEvent` smart contract', async () => {
+    it('generates and deploys the `BettingEvent` smart contract', async () => {
       const startLag = 1000;
       const duration = 1000;
       const startTimestamp = Date.now() + startLag;
