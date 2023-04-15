@@ -1,3 +1,4 @@
-import { Add } from './Add.js';
+import { Event } from './Event.js';
+import { ERC20 } from './ERC20.js';
 
-export { Add };
+export { Event, ERC20 };
