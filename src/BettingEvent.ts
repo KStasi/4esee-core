@@ -24,6 +24,8 @@ export class BettingEvent extends SmartContract {
   ORACLE_KEY = Field(3);
   START_KEY = Field(4);
   END_KEY = Field(5);
+  DESCRIPTION_KEY = Field(6);
+
   @state(Field) mapRoot = State<Field>();
 
   @state(UInt32) betsAgainst = State<UInt64>();

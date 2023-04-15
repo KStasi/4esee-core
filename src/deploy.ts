@@ -34,9 +34,30 @@ Mina.setActiveInstance(Network);
 
 async function main() {
   let deployerPrivateKey = PrivateKey.fromBase58(key.privateKey);
+  const startLag = 1000 * 60 * 10;
+  const duration = 1000 * 60 * 60 * 5;
+  const startTimestamp = Date.now() + startLag;
+  const endTimestamp = startTimestamp + duration;
+  const eventDescription = 'Beastcost will win the ESL Championship';
 
-  const { eventAddress } = await deployAllContracts(deployerPrivateKey);
+  const { eventAddress, tokenForAddress, tokenAgainstAddress, oracleAddress } =
+    await deployAllContracts(
+      deployerPrivateKey,
+      startTimestamp,
+      endTimestamp,
+      eventDescription
+    );
+
+  const merkleMapValues = {
+    BET_FOR_TOKEN_KEY: tokenForAddress.toBase58(),
+    BET_AGAINST_TOKEN_KEY: tokenAgainstAddress.toBase58(),
+    ORACLE_KEY: oracleAddress.toBase58(),
+    START_KEY: startTimestamp,
+    END_KEY: endTimestamp,
+    DESCRIPTION_KEY: eventDescription,
+  };
   console.log(eventAddress.toBase58());
+  console.log(merkleMapValues);
 }
 
 main().then(() => shutdown());

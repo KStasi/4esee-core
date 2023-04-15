@@ -9,6 +9,7 @@ import {
   Poseidon,
   MerkleMap,
   UInt64,
+  Encoding,
 } from 'snarkyjs';
 
 import { BettingEvent } from './BettingEvent.js';
@@ -112,7 +113,12 @@ async function prepareAddresses(): Promise<{
   };
 }
 
-async function deployAllContracts(deployerPrivateKey: PrivateKey): Promise<{
+async function deployAllContracts(
+  deployerPrivateKey: PrivateKey,
+  startTimestamp: number,
+  endTimestamp: number,
+  description: string
+): Promise<{
   tokenAgainstAddress: PublicKey;
   tokenForAddress: PublicKey;
   oracleAddress: PublicKey;
@@ -132,10 +138,6 @@ async function deployAllContracts(deployerPrivateKey: PrivateKey): Promise<{
     oraclePrivateKey,
     eventPrivateKey,
   } = await prepareAddresses();
-  console.log(tokenAgainstAddress.toBase58());
-  console.log(tokenForAddress.toBase58());
-  console.log(oracleAddress.toBase58());
-  console.log(eventAddress.toBase58());
 
   const tokenForInstance = new Token(tokenForAddress);
   const tokenAgainstInstance = new Token(tokenAgainstAddress);
@@ -166,19 +168,17 @@ async function deployAllContracts(deployerPrivateKey: PrivateKey): Promise<{
   const keyTokenAgainstHash = Poseidon.hash(tokenAgainstAddress.toFields());
   const keyTokenForHash = Poseidon.hash(tokenForAddress.toFields());
   const keyOracleHash = Poseidon.hash(oracleAddress.toFields());
-  const startLag = 1000;
-  const duration = 1000;
-  const startTimestamp = Date.now() + startLag;
-  const emdTimestamp = startTimestamp + duration;
+  const descriptionHash = Poseidon.hash(Encoding.stringToFields(description));
 
   const startDate = Poseidon.hash(UInt64.from(startTimestamp).toFields());
-  const endDate = Poseidon.hash(UInt64.from(emdTimestamp).toFields());
+  const endDate = Poseidon.hash(UInt64.from(endTimestamp).toFields());
 
   map.set(Field(idsForMap.BET_AGAINST_TOKEN_KEY), keyTokenAgainstHash);
   map.set(Field(idsForMap.BET_FOR_TOKEN_KEY), keyTokenForHash);
   map.set(Field(idsForMap.ORACLE_KEY), keyOracleHash);
   map.set(Field(idsForMap.START_KEY), startDate);
   map.set(Field(idsForMap.END_KEY), endDate);
+  map.set(Field(idsForMap.DESCRIPTION_KEY), descriptionHash);
 
   const eventParams = await deployEvent(
     eventInstance,

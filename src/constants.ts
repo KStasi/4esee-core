@@ -4,4 +4,5 @@ export const idsForMap = {
   ORACLE_KEY: 3,
   START_KEY: 4,
   END_KEY: 5,
+  DESCRIPTION_KEY: 6,
 };
