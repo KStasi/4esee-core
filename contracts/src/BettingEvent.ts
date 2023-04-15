@@ -14,8 +14,8 @@ import {
   Circuit,
   Poseidon,
 } from 'snarkyjs';
-import { Token } from './Token';
-import { Oracle } from './Oracle';
+import { Token } from './Token.js';
+import { Oracle } from './Oracle.js';
 
 export class BettingEvent extends SmartContract {
   RESULT_NOT_SET = Field(0);

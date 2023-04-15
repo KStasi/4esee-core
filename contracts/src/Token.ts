@@ -12,24 +12,14 @@ import {
 } from 'snarkyjs';
 
 export class Token extends SmartContract {
-  deploy(args: DeployArgs) {
-    super.deploy(args);
-    this.account.tokenSymbol.set('BET');
-    // this.account.permissions.set({
-    //   ...Permissions.default(),
-    //   setPermissions: Permissions.proof(),
-    // });
-  }
-
-  @method init() {
+  init() {
     super.init();
+    this.account.tokenSymbol.set('BET');
 
     // make account non-upgradable forever
     this.account.permissions.set({
       ...Permissions.default(),
-      // setVerificationKey: Permissions.impossible(),
-      // setPermissions: Permissions.impossible(),
-      send: Permissions.proofOrSignature(),
+      send: Permissions.proof(),
     });
   }
 
@@ -52,6 +42,7 @@ export class Token extends SmartContract {
   }
 
   @method mint(to: PublicKey, value: UInt64): Bool {
+    // TODO: how to authorize minting from another zkApp?
     this.token.mint({
       address: to,
       amount: value,
@@ -60,6 +51,7 @@ export class Token extends SmartContract {
   }
 
   @method burn(from: PublicKey, value: UInt64): Bool {
+    // TODO: how to authorize minting from another zkApp?
     this.token.burn({
       address: from,
       amount: value,
