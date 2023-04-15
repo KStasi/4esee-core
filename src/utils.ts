@@ -112,6 +112,37 @@ async function prepareAddresses(): Promise<{
     eventAddress,
   };
 }
+function prepareMap(merkleMapValues: any): MerkleMap {
+  const map = new MerkleMap();
+
+  const keyTokenAgainstHash = Poseidon.hash(
+    PublicKey.fromBase58(merkleMapValues.BET_AGAINST_TOKEN_KEY).toFields()
+  );
+  const keyTokenForHash = Poseidon.hash(
+    PublicKey.fromBase58(merkleMapValues.BET_FOR_TOKEN_KEY).toFields()
+  );
+  const keyOracleHash = Poseidon.hash(
+    PublicKey.fromBase58(merkleMapValues.ORACLE_KEY).toFields()
+  );
+  const descriptionHash = Poseidon.hash(
+    Encoding.stringToFields(merkleMapValues.DESCRIPTION_KEY)
+  );
+
+  const startDate = Poseidon.hash(
+    UInt64.from(merkleMapValues.START_KEY).toFields()
+  );
+  const endDate = Poseidon.hash(
+    UInt64.from(merkleMapValues.END_KEY).toFields()
+  );
+
+  map.set(Field(idsForMap.BET_AGAINST_TOKEN_KEY), keyTokenAgainstHash);
+  map.set(Field(idsForMap.BET_FOR_TOKEN_KEY), keyTokenForHash);
+  map.set(Field(idsForMap.ORACLE_KEY), keyOracleHash);
+  map.set(Field(idsForMap.START_KEY), startDate);
+  map.set(Field(idsForMap.END_KEY), endDate);
+  map.set(Field(idsForMap.DESCRIPTION_KEY), descriptionHash);
+  return map;
+}
 
 async function deployAllContracts(
   deployerPrivateKey: PrivateKey,
@@ -162,7 +193,6 @@ async function deployAllContracts(
   );
 
   const eventInstance = new BettingEvent(eventAddress);
-  // TODO: use real mapRoot
   const map = new MerkleMap();
 
   const keyTokenAgainstHash = Poseidon.hash(tokenAgainstAddress.toFields());
@@ -226,4 +256,5 @@ export {
   deployOracle,
   deployEvent,
   deployAllContracts,
+  prepareMap,
 };
