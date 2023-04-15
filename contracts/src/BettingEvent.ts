@@ -17,14 +17,13 @@ import {
 import { Token } from './Token';
 import { Oracle } from './Oracle';
 
-const RESULT_NOT_SET = new Field(0);
-const BET_FOR_TOKEN_KEY = Field(1);
-const BET_AGAINST_TOKEN_KEY = Field(2);
-const ORACLE_KEY = Field(3);
-const START_KEY = Field(4);
-const END_KEY = Field(5);
-
 export class BettingEvent extends SmartContract {
+  RESULT_NOT_SET = Field(0);
+  BET_FOR_TOKEN_KEY = Field(1);
+  BET_AGAINST_TOKEN_KEY = Field(2);
+  ORACLE_KEY = Field(3);
+  START_KEY = Field(4);
+  END_KEY = Field(5);
   @state(Field) mapRoot = State<Field>();
 
   @state(UInt32) betsAgainst = State<UInt64>();
@@ -72,7 +71,7 @@ export class BettingEvent extends SmartContract {
     const [rootFromTimeWitness, startKey] =
       startWitness.computeRootAndKey(startHash);
     rootFromTimeWitness.assertEquals(initialRoot);
-    START_KEY.assertEquals(startKey);
+    this.START_KEY.assertEquals(startKey);
 
     // Check that event didn't started
     const now = this.network.timestamp.get();
@@ -81,8 +80,8 @@ export class BettingEvent extends SmartContract {
     // Get the hash of the token address to enable it as a key
     const betTokenKey = Circuit.if(
       side,
-      BET_FOR_TOKEN_KEY,
-      BET_AGAINST_TOKEN_KEY
+      this.BET_FOR_TOKEN_KEY,
+      this.BET_AGAINST_TOKEN_KEY
     );
     const tokenHash = Poseidon.hash(tokenPk.toFields());
 
@@ -108,6 +107,7 @@ export class BettingEvent extends SmartContract {
       this.betsFor.set(betsFor.add(amount));
     }
   }
+
   @method reveal(
     endWitness: MerkleMapWitness,
     end: UInt64,
@@ -119,7 +119,7 @@ export class BettingEvent extends SmartContract {
     this.result.assertEquals(result);
 
     // Check that result not already known
-    result.assertEquals(RESULT_NOT_SET);
+    result.assertEquals(this.RESULT_NOT_SET);
 
     // Get the on-chain commitment for the public data stored off-chain
     const initialRoot = this.mapRoot.get();
@@ -129,7 +129,7 @@ export class BettingEvent extends SmartContract {
     const endHash = Poseidon.hash(end.toFields());
     const [rootFromTimeWitness, endKey] = endWitness.computeRootAndKey(endHash);
     rootFromTimeWitness.assertEquals(initialRoot);
-    endKey.assertEquals(END_KEY);
+    endKey.assertEquals(this.END_KEY);
 
     // Check that event ended
     const now = this.network.timestamp.get();
@@ -142,7 +142,7 @@ export class BettingEvent extends SmartContract {
     const [rootOracleWitness, key] =
       oracleWitness.computeRootAndKey(oracleHash);
     rootOracleWitness.assertEquals(initialRoot);
-    key.assertEquals(ORACLE_KEY);
+    key.assertEquals(this.ORACLE_KEY);
 
     // Ask oracle for result
     const oracle = new Oracle(oraclePk);
@@ -162,7 +162,7 @@ export class BettingEvent extends SmartContract {
     this.result.assertEquals(result);
 
     // Check that result already known
-    result.assertGreaterThan(RESULT_NOT_SET);
+    result.assertGreaterThan(this.RESULT_NOT_SET);
 
     // Get the on-chain commitment for the public data stored off-chain
     const initialRoot = this.mapRoot.get();
@@ -193,7 +193,7 @@ export class BettingEvent extends SmartContract {
 
     // Calculate rewards amount
     const winnerBets = Circuit.if(
-      result.equals(BET_AGAINST_TOKEN_KEY),
+      result.equals(this.BET_AGAINST_TOKEN_KEY),
       betsAgainst,
       betsFor
     );

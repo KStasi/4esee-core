@@ -13,7 +13,6 @@ import {
   Permissions,
   Circuit,
 } from 'snarkyjs';
-import { ERC20 } from './ERC20';
 
 export class Oracle extends SmartContract {
   @method getResult(): Field {

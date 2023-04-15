@@ -11,16 +11,6 @@ import {
   Account,
 } from 'snarkyjs';
 
-/**
- * A simple ERC20 token
- *
- * Tokenomics:
- * The supply is constant and the entire supply is initially sent to an account controlled by the zkApp developer
- * After that, tokens can be sent around with authorization from their owner, but new ones can't be minted.
- *
- * Functionality:
- * Just enough to be swapped by the DEX contract, and be secure
- */
 export class Token extends SmartContract {
   deploy(args: DeployArgs) {
     super.deploy(args);
