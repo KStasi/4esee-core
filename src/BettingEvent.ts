@@ -62,7 +62,7 @@ export class BettingEvent extends SmartContract {
   ): void {
     // Send deposit to contract
     const payerUpdate = AccountUpdate.createSigned(user);
-    payerUpdate.send({ to: this.address, amount: UInt64.from(amount) });
+    payerUpdate.send({ to: this, amount: UInt64.from(amount) });
     this.network.globalSlotSinceGenesis.assertEquals(
       this.network.globalSlotSinceGenesis.get()
     );
